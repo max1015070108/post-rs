@@ -232,7 +232,7 @@ impl crate::operator::Service for PostService {
         }
     }
 
-    async fn gen_proof(&self, ch: &[u8]) -> eyre::Result<ProofGenState> {
+    fn gen_proof(&self, ch: &[u8]) -> eyre::Result<ProofGenState> {
         let mut proof_gen = self.proof_generation.lock().unwrap();
         proof_gen.check_finished();
         match &*proof_gen {

@@ -6,9 +6,14 @@
 use crate::service::ProofGenState;
 use std::{ops::Range, sync::Arc};
 
-use axum::{extract::State, routing::get, Error, Json, Router};
+use axum::{extract::State, routing::get, routing::post, Error, Json, Router};
 use serde::{Deserialize, Serialize};
 use tokio::net::TcpListener;
+
+#[derive(Serialize)]
+struct SomeData {
+    message: String,
+}
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 /// The Post-service state
@@ -32,7 +37,7 @@ pub trait Service {
     /// Returns the current state of the service.
     fn status(&self) -> ServiceState;
     // async fn get_proof(&self) -> Result<String, Box<dyn std::error::Error>>;
-    async fn gen_proof(&self, ch: &[u8]) -> eyre::Result<ProofGenState>;
+    fn gen_proof(&self, ch: &[u8]) -> eyre::Result<ProofGenState>;
 }
 
 pub async fn run<S>(listener: TcpListener, service: Arc<S>) -> eyre::Result<()>
@@ -43,7 +48,7 @@ where
 
     let app = Router::new()
         .route("/status", get(status))
-        .route("/genproof", get(gen_proof))
+        .route("/genproof", post(gen_proof1))
         .with_state(service);
 
     axum::serve(listener, app)
@@ -58,14 +63,35 @@ where
     Json(service.status())
 }
 
-async fn gen_proof<S>(State(service): State<Arc<S>>)
+// async fn gen_proof<S>(State(service): State<Arc<S>>)
+// where
+//     S: Service + Sync + Send + 'static,
+// {
+//     // &[u8] const
+//     let challenge = vec![0u8; 32];
+//     //
+//     let result = service.gen_proof(&challenge);
+// }
+// Example serializable struct if state returns a complex object
+
+async fn gen_proof1<S>(State(service): State<Arc<S>>) -> Json<SomeData>
 where
     S: Service + Sync + Send + 'static,
 {
-    // &[u8] const
-    let challenge = vec![0u8; 32];
-    //
-    let result = service.gen_proof(&challenge);
+    let challenge = vec![0u8; 32]; // assuming you're creating a challenge here
+    let state = service.gen_proof(&challenge).unwrap();
+
+    Json(SomeData {
+        message: String::from("hello"),
+    })
+    // match service.gen_proof(&challenge); {
+    //     Ok(state) => Ok(Json(SomeData {
+    //         message: String::from("heloo"), //state.to_string(), // Assuming `state` can be converted to String or similar
+    //     })),
+    //     // error to string
+    //     // Err(e) => Err(Error::from_str(StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
+    //     Err(e) => Err(e.to_string()), // Customize error handling as needed
+    // }
 }
 
 #[cfg(test)]
