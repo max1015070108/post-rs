@@ -1,11 +1,11 @@
 [package]
 name = "certifier"
-version = "0.7.7"
+version = "0.7.8"
 edition = "2021"
 
 [dependencies]
 axum = "0.7.5"
-serde = { version = "1.0.198", features = ["derive"] }
+serde = { version = "1.0.203", features = ["derive"] }
 tokio = { version = "1.37", features = [
     "rt-multi-thread",
     "macros",
@@ -13,7 +13,7 @@ tokio = { version = "1.37", features = [
     "time",
 ] }
 post-rs = { path = "../" }
-serde_with = { version = "3.4.0", features = ["base64", "hex"] }
+serde_with = { version = "3.8.1", features = ["base64", "hex"] }
 ed25519-dalek = { version = "2.1.1", features = ["rand_core"] }
 clap = { version = "4.5.4", features = ["derive", "env"] }
 hex = "0.4.3"
@@ -23,17 +23,18 @@ tracing = { version = "0.1.40", features = ["log"] }
 tracing-log = "0.2.0"
 tracing-subscriber = { version = "0.3.17", features = ["env-filter"] }
 rand = "0.8.5"
-serde_json = "1.0.116"
-base64 = "0.22.0"
+serde_json = "1.0.117"
+base64 = "0.22.1"
 axum-prometheus = "0.6.1"
-tower = { version = "0.4.13", features = ["limit"] }
-duration-str = { version = "0.7.1", default-features = false, features = [
+tower = { version = "0.4.13", features = ["limit", "load-shed", "buffer"] }
+duration-str = { version = "0.10.0", default-features = false, features = [
     "serde",
     "time",
 ] }
-parity-scale-codec = { version = "3.6.9", features = ["derive", "serde"] }
+parity-scale-codec = { version = "3.6.12", features = ["derive", "serde"] }
 mockall = "0.12.1"
 
 [dev-dependencies]
+axum-test = "14.9.1"
 reqwest = { version = "0.12.4", features = ["json"] }
 tempfile = "3.8.1"
