@@ -43,7 +43,7 @@ where
 
     let app = Router::new()
         .route("/status", get(status))
-        .route("/genproof", get(status))
+        .route("/genproof", get(gen_proof))
         .with_state(service);
 
     axum::serve(listener, app)
