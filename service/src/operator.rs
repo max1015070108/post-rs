@@ -3,9 +3,10 @@
 //! It exposes an HTTP API.
 //! Allows to query the status of the post service.
 
+use crate::service::ProofGenState;
 use std::{ops::Range, sync::Arc};
 
-use axum::{extract::State, routing::get, Json, Router};
+use axum::{extract::State, routing::get, Error, Json, Router};
 use serde::{Deserialize, Serialize};
 use tokio::net::TcpListener;
 
@@ -30,6 +31,8 @@ pub enum ServiceState {
 pub trait Service {
     /// Returns the current state of the service.
     fn status(&self) -> ServiceState;
+    // async fn get_proof(&self) -> Result<String, Box<dyn std::error::Error>>;
+    async fn gen_proof(&self, ch: &[u8]) -> eyre::Result<ProofGenState>;
 }
 
 pub async fn run<S>(listener: TcpListener, service: Arc<S>) -> eyre::Result<()>
@@ -40,6 +43,7 @@ where
 
     let app = Router::new()
         .route("/status", get(status))
+        .route("/genproof", get(status))
         .with_state(service);
 
     axum::serve(listener, app)
@@ -52,6 +56,16 @@ where
     S: Service + Sync + Send + 'static,
 {
     Json(service.status())
+}
+
+async fn gen_proof<S>(State(service): State<Arc<S>>)
+where
+    S: Service + Sync + Send + 'static,
+{
+    // &[u8] const
+    let challenge = vec![0u8; 32];
+    //
+    let result = service.gen_proof(&challenge);
 }
 
 #[cfg(test)]

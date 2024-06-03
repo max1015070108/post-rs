@@ -231,6 +231,59 @@ impl crate::operator::Service for PostService {
             ProofGenProcess::Done { .. } => ServiceState::DoneProving,
         }
     }
+
+    async fn gen_proof(&self, ch: &[u8]) -> eyre::Result<ProofGenState> {
+        let mut proof_gen = self.proof_generation.lock().unwrap();
+        proof_gen.check_finished();
+        match &*proof_gen {
+            ProofGenProcess::Running { challenge, .. } => {
+                eyre::ensure!(
+                challenge.as_slice() == ch,
+                 "proof generation is in progress for a different challenge (current: {}, requested: {})",
+                  hex::encode_upper(challenge),
+                  hex::encode_upper(ch),
+                );
+                return Ok(ProofGenState::InProgress);
+            }
+            ProofGenProcess::Idle => {
+                let challenge: [u8; 32] = ch
+                    .try_into()
+                    .map_err(|_| eyre::eyre!("invalid challenge format"))?;
+                log::info!(
+                    "starting proof generation for challenge {}",
+                    hex::encode_upper(challenge)
+                );
+                let pow_flags = self.pow_flags;
+                let cfg = self.cfg;
+                let datadir = self.datadir.clone();
+                let nonces = self.nonces;
+                let threads = self.threads.clone();
+                let stop = self.stop.clone();
+                let progress = ProvingProgress::default();
+                let reporter = progress.clone();
+                *proof_gen = ProofGenProcess::Running {
+                    challenge,
+                    handle: Some(std::thread::spawn(move || {
+                        post::prove::generate_proof(
+                            &datadir, &challenge, cfg, nonces, threads, pow_flags, stop, reporter,
+                        )
+                    })),
+                    progress,
+                };
+            }
+            ProofGenProcess::Done { proof } => {
+                log::info!("proof generation is finished");
+                return match proof {
+                    Ok(proof) => Ok(ProofGenState::Finished {
+                        proof: proof.clone(),
+                    }),
+                    Err(e) => Err(eyre::eyre!("proof generation failed: {}", e)),
+                };
+            }
+        }
+
+        Ok(ProofGenState::InProgress)
+    }
 }
 
 impl Drop for PostService {
