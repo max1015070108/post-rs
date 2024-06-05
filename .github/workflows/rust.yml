@@ -19,10 +19,6 @@ jobs:
         default: true
     - name: Install protobuf-compiler
       run: sudo apt-get update && sudo apt-get install -y protobuf-compiler
-    - name: Compile .proto files
-      working-directory: ./service
-      run: |
-        protoc --proto_path=./ --rust_out=./src/ ./api/**/*.proto
     - name: Build Release in Service
       working-directory: ./service
       run: cargo build --release
