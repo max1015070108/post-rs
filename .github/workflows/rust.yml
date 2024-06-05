@@ -11,7 +11,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
       with:
-        submodules: 'recursive' # 递归检出submodules
+        submodules: 'recursive'  # 递归检出submodules
     - name: Set up Rust
       uses: actions-rs/toolchain@v1
       with:
@@ -36,12 +36,14 @@ jobs:
       run: pwd
     - name: List files in the current directory
       run: ls -lah ./target
+    - name: Zip the build
+      run: zip -j ./target/release/post-service.zip ./target/release/post-service
     - name: Upload Release Asset
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./target/release/post-service
-        asset_name: post-service
-        asset_content_type: application/octet-stream
+        asset_path: ./target/release/post-service.zip
+        asset_name: post-service.zip
+        asset_content_type: application/zip
