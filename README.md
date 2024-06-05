@@ -20,3 +20,5 @@ Includes:
 
 ## Post Service
 Please refer to [service README](service/README.md) for instructions.
+
+## License
